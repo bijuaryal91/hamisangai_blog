@@ -1,38 +1,103 @@
+<?php
+require_once('./includes/conn.php');
+$slug = isset($_GET['slug']) ? $_GET['slug'] : null;
+if (!$slug) {
+    // Redirect to 404 if no slug is provided
+    header('Location: ../404.php');
+    exit;
+}
+$stmt = $conn->prepare("SELECT * FROM site_settings WHERE id = ?");
+$stmt->execute(["1"]);
+$setting = $stmt->fetch(PDO::FETCH_ASSOC);
+
+
+
+$stmt = $conn->prepare("
+    SELECT 
+    posts.*,
+    admins.name AS admin_name,
+    admins.profile_image_url AS admin_pic,
+    admins.bio AS admin_bio,
+    categories.name AS category_name
+FROM 
+    posts
+LEFT JOIN admins ON posts.added_by = admins.id
+LEFT JOIN categories ON posts.category_id = categories.id WHERE posts.slug= ?
+");
+
+$stmt->execute([$slug]);
+$blog = $stmt->fetch(PDO::FETCH_ASSOC);
+$dateTime = (new DateTime($blog['created_at']))->format('M, d, Y');
+
+
+$stmt = $conn->prepare("SELECT comments.name,comments.content AS comment_content, comments.created_at AS comment_date 
+FROM comments 
+INNER JOIN posts ON comments.post_id = posts.id 
+WHERE comments.post_id = ? AND comments.status = ? ORDER BY comments.created_at DESC
+");
+
+$stmt->execute([$blog['id'], "APPROVED"]);
+$comments = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$stmt = $conn->prepare("SELECT COUNT(*) AS commentcount 
+FROM comments 
+INNER JOIN posts ON comments.post_id = posts.id 
+WHERE comments.post_id = ? AND comments.status = ?;
+");
+
+$stmt->execute([$blog['id'], "APPROVED"]);
+$commentsCount = $stmt->fetch(PDO::FETCH_ASSOC);
+
+
+
+?>
+
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Rise of AI in Content Creation - HamiSangai</title>
+    <base href="http://localhost/hamisangai/">
+    <title><?php echo $blog['title'] ?> - HamiSangai</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
+
 <body>
- 
+
     <!-- Header Section -->
     <?php
-        require_once('./includes/navbar.php');
+    require_once('./includes/navbar.php');
     ?>
+
 
     <!-- Blog Post Hero -->
     <section class="single-post-hero" aria-labelledby="post-hero-heading">
         <div class="container">
             <div class="post-hero-content">
                 <div class="post-meta">
-                    <span class="post-category">Technology</span>
-                    <span class="post-date">June 20, 2023</span>
-                    <span class="post-reading-time">5 min read</span>
+                    <span class="post-category"><?php echo $blog['category_name'] ?></span>
+                    <span class="post-date"><?php echo  $dateTime ?></span>
+                    <span class="post-reading-time"><?php echo $blog['reading_time_minutes'] ?> min read</span>
                 </div>
-                <h1 id="post-hero-heading">The Rise of AI in Content Creation</h1>
+                <h1 id="post-hero-heading"><?php echo $blog['title'] ?></h1>
                 <div class="post-author">
-                    <img src="https://picsum.photos/100/100?random=10" alt="Author avatar" class="author-avatar" loading="lazy">
+                    <img src="<?php echo $blog['admin_pic'] ?>" alt="Author avatar" class="author-avatar" loading="lazy">
                     <div class="author-info">
-                        <span class="author-name">Jane Doe</span>
-                        <span class="author-title">Content Strategist</span>
+                        <span class="author-name"><?php echo $blog['admin_name'] ?></span>
                     </div>
                 </div>
+                <!-- Breadcrumb Navigation -->
             </div>
         </div>
+        <nav class="breadcrumb container" aria-label="Breadcrumb">
+            <ol>
+                <li><a href="http://localhost/hamisangai/">Home</a></li>
+                <li><a href="http://localhost/hamisangai/blog.php">Blog</a></li>
+                <li aria-current="page"><?php echo htmlspecialchars($blog['title']); ?></li>
+            </ol>
+        </nav>
     </section>
 
     <!-- Main Content -->
@@ -40,160 +105,128 @@
         <div class="container">
             <article class="single-post-content">
                 <div class="featured-image">
-                    <img src="https://picsum.photos/1200/800?random=11" alt="AI creating content" loading="lazy">
-                    <p class="image-caption">AI tools are revolutionizing how we create digital content.</p>
+                    <img src="<?php echo $blog['featured_image_url'] ?>" alt="<?php echo $blog['title'] ?>" loading="lazy">
+                    <p class="image-caption"><?php echo $blog['excert'] ?></p>
                 </div>
 
                 <div class="post-body">
-                    <p>Artificial Intelligence (AI) has been making waves across various industries, and content creation is no exception. In recent years, we've seen an explosion of AI-powered tools that assist with writing, graphic design, video production, and more. This technological advancement is transforming how we create and consume content online.</p>
-
-                    <h2>The Current State of AI Content Tools</h2>
-                    <p>Today's AI content tools are more sophisticated than ever. Natural Language Processing (NLP) models like GPT-4 can generate human-like text, while image generation tools like DALL-E can create stunning visuals from simple text prompts. These technologies are becoming increasingly accessible to content creators of all levels.</p>
-
-                    <blockquote>
-                        "AI won't replace content creators, but content creators who use AI will replace those who don't."
-                        <cite>- Industry Expert</cite>
-                    </blockquote>
-
-                    <h2>Benefits of AI in Content Creation</h2>
-                    <p>The integration of AI in content creation offers numerous advantages:</p>
-                    <ul>
-                        <li><strong>Increased Efficiency:</strong> AI can generate draft content quickly, allowing creators to focus on refinement and strategy.</li>
-                        <li><strong>Cost Reduction:</strong> Small businesses can produce quality content without large creative teams.</li>
-                        <li><strong>Personalization:</strong> AI can tailor content to individual users based on their preferences and behavior.</li>
-                        <li><strong>Multilingual Content:</strong> AI translation tools make it easier to reach global audiences.</li>
-                    </ul>
-
-                    <div class="post-image">
-                        <img src="https://picsum.photos/800/500?random=12" alt="AI content creation process" loading="lazy">
-                        <p class="image-caption">The AI content creation workflow from concept to publication.</p>
-                    </div>
-
-                    <h2>Challenges and Ethical Considerations</h2>
-                    <p>While AI offers many benefits, it also presents challenges:</p>
-                    <ol>
-                        <li><strong>Quality Control:</strong> AI-generated content may require significant human editing to ensure accuracy and brand voice consistency.</li>
-                        <li><strong>Originality:</strong> There are concerns about AI producing derivative or plagiarized content.</li>
-                        <li><strong>Job Displacement:</strong> Some fear AI could replace human content creators, though most experts believe it will augment rather than replace human creativity.</li>
-                        <li><strong>Bias:</strong> AI models can perpetuate biases present in their training data.</li>
-                    </ol>
-
-                    <h2>The Future of AI in Content Creation</h2>
-                    <p>Looking ahead, we can expect AI to become even more integrated into content creation workflows. Future developments might include:</p>
-                    <ul>
-                        <li>More sophisticated multimodal AI that can seamlessly combine text, images, and video</li>
-                        <li>Improved contextual understanding for more nuanced content generation</li>
-                        <li>Better tools for maintaining consistent brand voice across all AI-generated content</li>
-                        <li>Enhanced collaboration between human creators and AI assistants</li>
-                    </ul>
-
-                    <div class="conclusion">
-                        <h3>Final Thoughts</h3>
-                        <p>AI is undoubtedly changing the content creation landscape, but it's not replacing human creativity. Instead, it's providing powerful tools that can enhance our creative capabilities. The most successful content creators of the future will be those who learn to effectively collaborate with AI, leveraging its strengths while applying human judgment, emotional intelligence, and strategic thinking.</p>
-                    </div>
+                    <?php echo $blog['content'] ?>
                 </div>
-
+                <?php
+                $tags = explode(',', $blog['meta_keywords']); // Split comma-separated string into an array                
+                ?>
                 <div class="post-tags">
                     <span>Tags:</span>
-                    <a href="#">AI</a>
-                    <a href="#">Content Creation</a>
-                    <a href="#">Technology</a>
-                    <a href="#">Digital Marketing</a>
+                    <?php foreach ($tags as $tag): ?>
+                        <a href="#"><?= htmlspecialchars(trim($tag)) ?></a>
+                    <?php endforeach; ?>
                 </div>
 
+                <!-- Share Buttons -->
                 <div class="post-share">
                     <span>Share:</span>
-                    <a href="#" aria-label="Share on Facebook"><i class="fab fa-facebook-f"></i></a>
-                    <a href="#" aria-label="Share on Twitter"><i class="fab fa-twitter"></i></a>
-                    <a href="#" aria-label="Share on LinkedIn"><i class="fab fa-linkedin-in"></i></a>
-                    <a href="#" aria-label="Share via Email"><i class="fas fa-envelope"></i></a>
+                    <a id="facebookShare" target="_blank" rel="noopener" aria-label="Share on Facebook">
+                        <i class="fab fa-facebook-f"></i>
+                    </a>
+                    <a id="twitterShare" target="_blank" rel="noopener" aria-label="Share on Twitter">
+                        <i class="fab fa-twitter"></i>
+                    </a>
+                    <a id="linkedinShare" target="_blank" rel="noopener" aria-label="Share on LinkedIn">
+                        <i class="fab fa-linkedin-in"></i>
+                    </a>
+                    <a id="emailShare" target="_blank" rel="noopener" aria-label="Share via Email">
+                        <i class="fas fa-envelope"></i>
+                    </a>
                 </div>
+
+                <!-- JavaScript to Set URLs -->
+                <script>
+                    const currentURL = encodeURIComponent(window.location.href);
+                    const pageTitle = encodeURIComponent(document.title);
+
+                    document.getElementById("facebookShare").href =
+                        `https://www.facebook.com/sharer/sharer.php?u=${currentURL}`;
+
+                    document.getElementById("twitterShare").href =
+                        `https://twitter.com/intent/tweet?url=${currentURL}&text=${pageTitle}`;
+
+                    document.getElementById("linkedinShare").href =
+                        `https://www.linkedin.com/shareArticle?mini=true&url=${currentURL}&title=${pageTitle}`;
+
+                    document.getElementById("emailShare").href =
+                        `mailto:?subject=${pageTitle}&body=Check this out: ${currentURL}`;
+                </script>
             </article>
 
             <!-- Author Bio -->
             <div class="author-bio">
                 <div class="author-avatar">
-                    <img src="https://picsum.photos/150/150?random=10" alt="Jane Doe" loading="lazy">
+                    <img src="<?php echo $blog['admin_pic'] ?>" alt="<?php echo $blog['admin_name'] ?>" loading="lazy">
                 </div>
                 <div class="author-details">
-                    <h3>About Jane Doe</h3>
-                    <p>Jane is a content strategist with over 10 years of experience in digital marketing. She specializes in AI-powered content creation and helps businesses leverage technology to improve their content marketing efforts.</p>
-                    <div class="author-social">
-                        <a href="#" aria-label="Jane's Twitter"><i class="fab fa-twitter"></i></a>
-                        <a href="#" aria-label="Jane's LinkedIn"><i class="fab fa-linkedin-in"></i></a>
-                        <a href="#" aria-label="Jane's Website"><i class="fas fa-globe"></i></a>
-                    </div>
+                    <h3>About <?php echo $blog['admin_name'] ?></h3>
+                    <p><?php echo $blog['admin_bio'] ?></p>
+
                 </div>
             </div>
 
             <!-- Related Posts -->
             <div class="related-posts">
+
+
                 <h2>Related Posts</h2>
                 <div class="related-grid">
-                    <article class="related-post">
-                        <a href="single-blog.php">
-                            <img src="https://picsum.photos/400/300?random=13" alt="Related post thumbnail" loading="lazy">
-                            <h3>How to Optimize Content for AI Search</h3>
-                        </a>
-                    </article>
-                    <article class="related-post">
-                        <a href="single-blog.php">
-                            <img src="https://picsum.photos/400/300?random=14" alt="Related post thumbnail" loading="lazy">
-                            <h3>The Ethics of AI-Generated Content</h3>
-                        </a>
-                    </article>
-                    <article class="related-post">
-                        <a href="single-blog.php">
-                            <img src="https://picsum.photos/400/300?random=15" alt="Related post thumbnail" loading="lazy">
-                            <h3>Content Marketing Trends for 2023</h3>
-                        </a>
-                    </article>
+                    <?php
+                    $stmt = $conn->prepare("SELECT posts.*, categories.name 
+                        FROM posts 
+                        INNER JOIN categories ON posts.category_id = categories.id 
+                        WHERE categories.name = ? LIMIT 3");
+
+                    $stmt->execute([$blog['category_name']]);
+                    $related_posts = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                    if ($related_posts) {
+                        foreach ($related_posts as $related_post) {
+                    ?>
+                            <article class="related-post">
+                                <a href="single-blog/<?php echo $related_post['slug'] ?>">
+                                    <img src="<?php echo $related_post['featured_image_url'] ?>" alt="<?php echo $related_post['title'] ?>" loading="lazy">
+                                    <h3><?php echo $related_post['title'] ?></h3>
+                                </a>
+                            </article>
+                    <?php
+                        }
+                    }
+                    ?>
+
                 </div>
             </div>
 
             <!-- Comments Section -->
             <div class="comments-section">
-                <h2>Comments (3)</h2>
+                <h2>Comments (<?php echo $commentsCount['commentcount'] ?>)</h2>
                 <div class="comment-list">
-                    <div class="comment">
-                        <div class="comment-author">
-                            <img src="https://picsum.photos/80/80?random=16" alt="Comment author avatar" loading="lazy">
-                            <div class="comment-author-info">
-                                <h4>Michael Johnson</h4>
-                                <span class="comment-date">June 21, 2023</span>
+                    <?php
+                    if ($comments) {
+                        foreach ($comments as $comment) {
+                            $commentDate = (new DateTime($comment['comment_date']))->format('M, d, Y');
+                    ?>
+                            <div class="comment">
+                                <div class="comment-author">
+                                    <img src="#" alt="Comment author avatar" loading="lazy" style="visibility: hidden;">
+                                    <div class="comment-author-info">
+                                        <h4><?php echo $comment['name'] ?></h4>
+                                        <span class="comment-date"><?php echo $commentDate ?></span>
+                                    </div>
+                                </div>
+                                <div class="comment-content">
+                                    <p><?php echo $comment['comment_content'] ?></p>
+                                </div>
                             </div>
-                        </div>
-                        <div class="comment-content">
-                            <p>Great article! I've been using AI tools for my blog and the time savings are incredible. The quality still needs human oversight, but it's a game-changer for overcoming writer's block.</p>
-                            <a href="#" class="comment-reply">Reply</a>
-                        </div>
-                    </div>
-                    <div class="comment">
-                        <div class="comment-author">
-                            <img src="https://picsum.photos/80/80?random=17" alt="Comment author avatar" loading="lazy">
-                            <div class="comment-author-info">
-                                <h4>Sarah Williams</h4>
-                                <span class="comment-date">June 22, 2023</span>
-                            </div>
-                        </div>
-                        <div class="comment-content">
-                            <p>I'm concerned about the ethical implications. How do we ensure AI-generated content doesn't spread misinformation or plagiarize existing work?</p>
-                            <a href="#" class="comment-reply">Reply</a>
-                        </div>
-                    </div>
-                    <div class="comment">
-                        <div class="comment-author">
-                            <img src="https://picsum.photos/80/80?random=18" alt="Comment author avatar" loading="lazy">
-                            <div class="comment-author-info">
-                                <h4>David Chen</h4>
-                                <span class="comment-date">June 23, 2023</span>
-                            </div>
-                        </div>
-                        <div class="comment-content">
-                            <p>We've implemented AI content tools in our agency, but we always have human editors review everything. The combination of AI efficiency and human creativity works best.</p>
-                            <a href="#" class="comment-reply">Reply</a>
-                        </div>
-                    </div>
+                    <?php
+                        }
+                    }
+                    ?>
+
                 </div>
                 <form class="comment-form">
                     <h3>Leave a Comment</h3>
@@ -209,17 +242,59 @@
                         <label for="comment-message">Comment</label>
                         <textarea id="comment-message" name="message" rows="5" required></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary">Post Comment</button>
+                    <input type="hidden" id="post-id" value="<?php echo $blog['id'] ?>">
+                    <input type="text" id="website" style="display: none;">
+
+                    <button type="submit" class="btn btn-primary post-comments">Post Comment</button>
+                    <div class="error-message visually-hidden"></div>
                 </form>
+                <script>
+                    document.querySelector('.post-comments').addEventListener("click", (e) => {
+                        e.preventDefault();
+
+                        const name = document.querySelector('#comment-name').value;
+                        const email = document.querySelector('#comment-email').value;
+                        const message = document.querySelector('#comment-message').value;
+                        const postid = document.querySelector('#post-id').value;
+                        const website = document.querySelector('#website').value;
+                        const error = document.querySelector('.error-message');
+                        let xhr = new XMLHttpRequest();
+                        xhr.open("POST", "./php/post_comments.php");
+                        xhr.onload = () => {
+                            if (xhr.readyState == XMLHttpRequest.DONE) {
+                                if (xhr.status == 200) {
+                                    let data = xhr.response;
+                                    console.log(data);
+
+                                    if (data == "success") {
+                                        document.location.reload();
+                                    } else {
+                                        error.innerHTML = data;
+                                        error.classList.remove("visually-hidden");
+                                    }
+                                }
+                            }
+                        }
+                        const formData = new FormData();
+                        formData.append('name', name);
+                        formData.append('email', email);
+                        formData.append('message', message);
+                        formData.append('post', postid);
+                        formData.append('website', website);
+
+                        xhr.send(formData);
+                    });
+                </script>
             </div>
         </div>
     </main>
 
     <!-- Footer -->
+    <script src="http://localhost/hamisangai/js/script.js"></script>
     <?php
     require_once('./includes/footer.php');
-   ?>
+    ?>
 
-    <script src="js/script.js"></script>
 </body>
+
 </html>

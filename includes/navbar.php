@@ -1,7 +1,7 @@
 <header class="header">
     <div class="container">
         <div class="logo">
-            <a href="index.php">HamiSangai</a>
+                    <a href="index.php"><?php echo $setting['sitename']; ?></a>
         </div>
         <nav class="nav">
             <button class="nav-toggle" aria-label="Toggle navigation">

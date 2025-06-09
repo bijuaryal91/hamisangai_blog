@@ -1,0 +1,18 @@
+# Enable URL rewriting
+RewriteEngine On
+RewriteRule ^force500$ - [R=500,L]
+
+# Redirect 404 errors to custom 404.php page
+ErrorDocument 404 /hamisangai/404.php
+ErrorDocument 403 /hamisangai/403.php
+ErrorDocument 500 /hamisangai/500.php
+
+
+RewriteRule ^single-blog/([a-zA-Z0-9\-]+)$ single-blog.php?slug=$1 [L,QSA]
+
+# Optional: Prevent access to .htaccess file itself
+<Files .htaccess>
+    Order Allow,Deny
+    Deny from all
+</Files>
+

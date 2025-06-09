@@ -1,10 +1,17 @@
+<?php
+require_once('./includes/conn.php');
+$stmt = $conn->prepare("SELECT * FROM site_settings WHERE id= ?");
+$stmt->execute(["1"]);
+$setting = $stmt->fetch(PDO::FETCH_ASSOC);
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home - HamiSangai</title>
+    <title>Home - <?php echo $setting['sitename']; ?></title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script>
@@ -31,7 +38,7 @@
 
         <!-- Content overlay -->
         <div class="hero-content">
-            <h1>Hami Sangai</h1>
+            <h1><?php echo $setting['sitename']; ?></h1>
             <p class="hero-text">Download our app today and experience the best service on your mobile device.</p>
 
             <div class="app-badges">
@@ -55,12 +62,12 @@
             <h2 id="about-heading" class="section-title">About Us</h2>
             <div class="about-content">
                 <div class="about-image">
-                    <img src="https://picsum.photos/600/400" alt="Our team working together" loading="lazy">
+                    <img src="<?php echo $setting['about_us_image']; ?>" alt="Our team working together" loading="lazy">
                 </div>
                 <div class="about-text">
                     <p>We are a team of passionate writers and content creators dedicated to bringing you high-quality articles on a variety of topics. Our mission is to educate, inspire, and entertain our readers.</p>
                     <p>Founded in 2020, we've grown from a small blog to a platform with thousands of monthly readers. Our content covers technology, lifestyle, business, and more.</p>
-                    <a href="#" class="btn btn-outline">Learn More</a>
+                    <p>Lorem ipsum dolor, sit amet consectetur adipisicing elit. Dolorum repellendus excepturi aspernatur temporibus est accusamus dolore numquam neque sit? Eos?</p>
                 </div>
             </div>
         </div>
@@ -71,27 +78,25 @@
         <div class="container">
             <h2 id="services-heading" class="section-title">Our Services</h2>
             <div class="services-grid">
-                <div class="service-card">
-                    <div class="service-icon">
-                        <i class="fas fa-pen-fancy"></i>
-                    </div>
-                    <h3 class="service-title">Content Writing</h3>
-                    <p class="service-description">High-quality, SEO-optimized content for your website or blog.</p>
-                </div>
-                <div class="service-card">
-                    <div class="service-icon">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                    <h3 class="service-title">SEO Optimization</h3>
-                    <p class="service-description">Improve your search rankings with our expert SEO services.</p>
-                </div>
-                <div class="service-card">
-                    <div class="service-icon">
-                        <i class="fas fa-bullhorn"></i>
-                    </div>
-                    <h3 class="service-title">Social Media</h3>
-                    <p class="service-description">Engage your audience with our social media management.</p>
-                </div>
+                <?php
+                $stmt = $conn->prepare("SELECT * FROM services");
+                $stmt->execute();
+                $services = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                if ($services) {
+                    foreach ($services as $service) {
+                ?>
+                        <div class="service-card">
+                            <div class="service-icon">
+                                <i class="<?php echo $service['featured_image_url']; ?>"></i>
+                            </div>
+                            <h3 class="service-title"><?php echo $service['title']; ?></h3>
+                            <p class="service-description"><?php echo $service['description']; ?></p>
+                        </div>
+                <?php
+                    }
+                }
+                ?>
+
             </div>
         </div>
     </section>
@@ -101,45 +106,34 @@
         <div class="container">
             <h2 id="featured-blogs-heading" class="section-title">Featured Blogs</h2>
             <div class="blogs-grid">
-                <article class="blog-card">
-                    <div class="blog-image">
-                        <img src="https://picsum.photos/400/300?random=1" alt="Blog post thumbnail" loading="lazy">
-                    </div>
-                    <div class="blog-content">
-                        <h3 class="blog-title"><a href="single-blog.php">10 Tips for Better Content Writing</a></h3>
-                        <p class="blog-excerpt">Learn how to improve your writing skills and create engaging content that resonates with your audience.</p>
-                        <div class="blog-meta">
-                            <span class="blog-date">June 15, 2023</span>
-                            <a href="single-blog.php" class="read-more">Read More</a>
-                        </div>
-                    </div>
-                </article>
-                <article class="blog-card">
-                    <div class="blog-image">
-                        <img src="https://picsum.photos/400/300?random=2" alt="Blog post thumbnail" loading="lazy">
-                    </div>
-                    <div class="blog-content">
-                        <h3 class="blog-title"><a href="single-blog.php">The Future of SEO in 2023</a></h3>
-                        <p class="blog-excerpt">Discover the latest SEO trends and how to adapt your strategy for better search rankings.</p>
-                        <div class="blog-meta">
-                            <span class="blog-date">June 10, 2023</span>
-                            <a href="single-blog.php" class="read-more">Read More</a>
-                        </div>
-                    </div>
-                </article>
-                <article class="blog-card">
-                    <div class="blog-image">
-                        <img src="https://picsum.photos/400/300?random=3" alt="Blog post thumbnail" loading="lazy">
-                    </div>
-                    <div class="blog-content">
-                        <h3 class="blog-title"><a href="single-blog.php">Social Media Strategies That Work</a></h3>
-                        <p class="blog-excerpt">Effective techniques to grow your audience and engagement on social media platforms.</p>
-                        <div class="blog-meta">
-                            <span class="blog-date">June 5, 2023</span>
-                            <a href="single-blog.php" class="read-more">Read More</a>
-                        </div>
-                    </div>
-                </article>
+                <?php
+                $stmt = $conn->prepare("SELECT * FROM posts WHERE status = ? ORDER BY RAND() LIMIT 3");
+                $stmt->execute(["PUBLISHED"]);
+                $blogs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                if ($blogs) {
+                    foreach ($blogs as $blog) {
+                        $dateonly = (new DateTime($blog['created_at']))->format('M, d, Y');
+                    
+                ?>
+
+                        <article class="blog-card">
+                            <div class="blog-image">
+                                <img src="<?php echo $blog['featured_image_url'] ?>" alt="Blog post thumbnail" loading="lazy">
+                            </div>
+                            <div class="blog-content">
+                                <h3 class="blog-title"><a href="single-blog.php"><?php echo $blog['title'] ?></a></h3>
+                                <p class="blog-excerpt"><?php echo $blog['excert'] ?></p>
+                                <div class="blog-meta">
+                                    <span class="blog-date"><?php echo $dateonly ?></span>
+                                    <a href="single-blog.php" class="read-more">Read More</a>
+                                </div>
+                            </div>
+                        </article>
+                <?php
+                    }
+                }
+                ?>
+             
             </div>
             <div class="section-footer">
                 <a href="blog.php" class="btn btn-primary">View All Blogs</a>
@@ -156,9 +150,9 @@
                     <h3>Get in Touch</h3>
                     <p>Have questions or want to discuss a project? Reach out to us!</p>
                     <ul class="contact-list">
-                        <li><i class="fas fa-envelope"></i> info@withepc.com</li>
-                        <li><i class="fas fa-phone"></i> +1 (555) 123-4567</li>
-                        <li><i class="fas fa-map-marker-alt"></i> 123 Blog Street, Content City</li>
+                        <li><i class="fas fa-envelope"></i><?php echo $setting['contact_email']; ?></li>
+                        <li><i class="fas fa-phone"></i> +977 <?php echo $setting['contact']; ?></li>
+                        <li><i class="fas fa-map-marker-alt"></i><?php echo $setting['address']; ?></li>
                     </ul>
                 </div>
                 <form class="contact-form">
