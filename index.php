@@ -121,7 +121,7 @@ $setting = $stmt->fetch(PDO::FETCH_ASSOC);
                                 <img src="<?php echo $blog['featured_image_url'] ?>" alt="Blog post thumbnail" loading="lazy">
                             </div>
                             <div class="blog-content">
-                                <h3 class="blog-title"><a href="single-blog.php"><?php echo $blog['title'] ?></a></h3>
+                                <h3 class="blog-title"><a href="single-blog/<?php echo $blog['slug'] ?>"><?php echo $blog['title'] ?></a></h3>
                                 <p class="blog-excerpt"><?php echo $blog['excert'] ?></p>
                                 <div class="blog-meta">
                                     <span class="blog-date"><?php echo $dateonly ?></span>

@@ -16,3 +16,6 @@ RewriteRule ^single-blog/([a-zA-Z0-9\-]+)$ single-blog.php?slug=$1 [L,QSA]
     Deny from all
 </Files>
 
+
+
+

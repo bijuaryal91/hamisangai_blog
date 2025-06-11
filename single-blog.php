@@ -10,6 +10,10 @@ $stmt = $conn->prepare("SELECT * FROM site_settings WHERE id = ?");
 $stmt->execute(["1"]);
 $setting = $stmt->fetch(PDO::FETCH_ASSOC);
 
+// Ensure $conn is a valid PDO instance and $slug is properly sanitized
+$stmt = $conn->prepare("UPDATE posts SET views_count = views_count + 1 WHERE slug = :slug");
+$stmt->bindParam(':slug', $slug, PDO::PARAM_STR);
+$stmt->execute();
 
 
 $stmt = $conn->prepare("
@@ -60,6 +64,14 @@ $commentsCount = $stmt->fetch(PDO::FETCH_ASSOC);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <base href="http://localhost/hamisangai/">
     <title><?php echo $blog['title'] ?> - HamiSangai</title>
+    <meta name="title" content="<?php echo $blog['meta_title'] ?>">
+    <meta name="description" content="<?php echo $blog['meta_description'] ?>">
+    <meta name="keywords" content="<?php echo $blog['meta_keywords'] ?>">
+    <meta name="robots" content="index, follow">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="language" content="English">
+    <meta name="revisit-after" content="1 days">
+    <meta name="author" content="withepc">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
